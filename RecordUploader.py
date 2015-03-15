@@ -1,7 +1,7 @@
 import httplib
 import glob
 import time
-import tarfile
+import zipfile
 import hashlib
 import random
 import ConfigParser
@@ -18,16 +18,16 @@ encryptKey = config.get('receiver', 'key')
 
 imageList = glob.glob("./[0-9]*.jpg")
 if len(imageList) > 0:
-    gzFileName = time.strftime('%Y%m%d%H%M%S')+'.gz'
-    tar = tarfile.open(gzFileName,'w:gz')
+    zipFileName = time.strftime('%Y%m%d%H%M%S')+'.zp'
+    zipFile = zipfile.ZipFile(zipFileName,'w',zipfile.ZIP_DEFLATED)
     for imageFile in imageList:
-        tar.add(imageFile)
-    tar.close()
+        zipFile.write(imageFile)
+    zipFile.close()
     for imageFile in imageList:
         os.remove(imageFile)
     #generateparams
     m = hashlib.sha1()
-    fd = open(gzFileName, 'rb')
+    fd = open(zipFileName, 'rb')
     m.update(fd.read())
     fd.close()
 
@@ -44,8 +44,8 @@ if len(imageList) > 0:
     # print headerInfo+':'+requestDegist
     # send
     form = MultiPartForm()
-    fd = open(gzFileName, 'rb')
-    form.add_file('pkg', gzFileName, fileHandle=fd)
+    fd = open(zipFileName, 'rb')
+    form.add_file('pkg', zipFileName, fileHandle=fd)
     fd.close()
 
     body = str(form)
@@ -59,7 +59,7 @@ if len(imageList) > 0:
     h.connect()
     resp = h.request('POST', '/receive', body, headers)
     if h.getresponse().status==200:
-        os.remove(gzFileName)
+        os.remove(zipFileName)
     h.close()
 
 
